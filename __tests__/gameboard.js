@@ -28,4 +28,8 @@ describe("Gameboard Object", () => {
   test("place should be able to place ships at specific coordinates", () => {
     expect(newGameboard.shipAt(0, 0)).toBe(ship1);
   });
+
+  test("recieveAttack should be able to attack ship", () => {
+    expect(newGameboard.shipAt(0, 0)).toBe(ship1);
+  });
 });

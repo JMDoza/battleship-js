@@ -1,16 +1,13 @@
-function Ship(len, initialHits = 0) {
+function Ship(len) {
   if (typeof len !== "number" || isNaN(len)) {
     throw new Error("Length must be a valid number");
   }
-  if (typeof initialHits !== "number" || isNaN(initialHits)) {
-    throw new Error("initialHits must be a valid number");
-  }
 
-  const hits = initialHits;
+  let hits = 0;
 
   const length = () => len;
   const numOfHits = () => hits;
-  const damage = () => Ship(len, hits + 1);
+  const damage = () => hits++;
   const isSunk = () => hits >= len;
   return {
     length,
