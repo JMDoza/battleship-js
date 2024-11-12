@@ -1,4 +1,4 @@
-import { Ship } from "../src/battleship";
+import { Ship } from "../src/battleship/ship";
 
 describe("Ship Object", () => {
   let ship;

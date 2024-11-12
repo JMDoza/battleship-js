@@ -1,2 +1,2 @@
 import "./styles.css";
-import { one } from "./battleship";
+import { one } from "./battleship/battleship";
