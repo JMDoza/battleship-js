@@ -7,8 +7,13 @@ describe("Ship Object", () => {
     ship = Ship(2);
   });
 
-  test("should throw an error if length or initialHists is not a number", () => {
+  test("should throw an error if length is not a number", () => {
     expect(() => Ship("test")).toThrow("Length must be a valid number");
+  });
+
+  test("should throw an error if length is not greater than 0", () => {
+    expect(() => Ship("0")).toThrow("Length must be a valid number");
+    expect(() => Ship("-1")).toThrow("Length must be a valid number");
   });
 
   test("should return correct length", () => {

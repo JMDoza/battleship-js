@@ -1,7 +1,7 @@
 const SHIP_IDENTIFIER = Symbol("Ship");
 
 function Ship(len) {
-  if (typeof len !== "number" || isNaN(len)) {
+  if (typeof len !== "number" || isNaN(len) || len <= 0) {
     throw new Error("Length must be a valid number");
   }
 

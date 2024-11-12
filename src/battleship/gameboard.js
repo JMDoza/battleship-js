@@ -14,36 +14,33 @@ function GameBoard(initialBoard) {
 
   const place = (row, col, shipObject, orientation = "vertical") => {
     validCoordinates(row, col);
+    validShip(shipObject);
     if (shipAt(row, col)) {
       throw new Error("Coordinates already occupied");
-    } else if (!isShip(shipObject)) {
-      throw new Error("Must be a valid Ship Object");
     }
 
     // ship always placed starting from the top piece
     const shipLength = shipObject.length();
-    if (shipLength > 1 && orientation === "vertical") {
-      if (row + shipLength >= rows) {
-        for (let i = 0; i < shipLength; i++) {
-          setCell(rows - 1 - i, col, shipObject);
-        }
-      } else {
-        for (let i = 0; i < shipLength; i++) {
-          setCell(row + i, col, shipObject);
-        }
-      }
-    } else if (shipLength > 1 && orientation === "horizontal") {
-      if (col + shipLength >= cols) {
-        for (let i = 0; i < shipLength; i++) {
-          setCell(row, cols - 1 - i, shipObject);
-        }
-      } else {
-        for (let i = 0; i < shipLength; i++) {
-          setCell(row, col + i, shipObject);
-        }
-      }
-    } else {
+    if (shipLength === 1) {
       setCell(row, col, shipObject);
+      return;
+    }
+    // If the length of the ship passes the grid edges then the function will
+    // adjust starting position to fit the ship within grid edges dependent on orientation
+    const [startingRow, startingCol] =
+      orientation === "vertical"
+        ? [adjustStartingPosition(row, rows, shipLength), col]
+        : [row, adjustStartingPosition(col, cols, shipLength)];
+
+    // Depending on orientaion returns array that will allow row/col to be shifted
+    // return values are either [1,0] or [0,1]
+    const [rowShift, colShift] = getShifts(orientation);
+    for (let i = 0; i < shipLength; i++) {
+      setCell(
+        startingRow + i * rowShift,
+        startingCol + i * colShift,
+        shipObject
+      );
     }
   };
 
@@ -65,6 +62,23 @@ function validCoordinates(row, col) {
   if (!(row < 10 && row >= 0) || !(col < 10 && col >= 0)) {
     throw new Error("Coordinates must be a valid | within 10x10");
   }
+}
+
+function validShip(object) {
+  if (!isShip(object)) {
+    throw new Error("Must be a valid Ship Object");
+  }
+}
+
+function adjustStartingPosition(position, boardLimit, objectLength) {
+  if (position + objectLength >= boardLimit) {
+    return boardLimit - objectLength;
+  }
+  return position;
+}
+
+function getShifts(orientation) {
+  return orientation === "vertical" ? [1, 0] : [0, 1];
 }
 
 export { GameBoard };

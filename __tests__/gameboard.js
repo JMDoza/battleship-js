@@ -36,7 +36,7 @@ describe("Gameboard Object", () => {
     const ship3 = Ship(2);
     const ship4 = Ship(3);
 
-    test("should be able to place a ship  at specific coordinates vertically", () => {
+    test("should be able to place a ship at specific coordinates vertically", () => {
       gameboard.place(0, 2, ship3);
       expect(gameboard.shipAt(0, 2)).toBe(ship3);
       expect(gameboard.shipAt(1, 2)).toBe(ship3);
