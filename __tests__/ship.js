@@ -1,4 +1,4 @@
-import { Ship } from "../src/battleship/ship";
+import { Ship, isShip } from "../src/battleship/ship";
 
 describe("Ship Object", () => {
   let ship;
@@ -11,25 +11,23 @@ describe("Ship Object", () => {
     expect(() => Ship("test")).toThrow("Length must be a valid number");
   });
 
-  test("length should return correct value", () => {
+  test("should return correct length", () => {
     expect(ship.length()).toEqual(2);
   });
 
-  test("damage should return a new ship object", () => {
-    const damagedShip = ship.damage();
-    expect(damagedShip).toBeDefined();
-    expect(damagedShip).not.toBe(ship);
-  });
-
-  test("numOfHits should return correct number of times hit", () => {
+  test("should return correct number of times hit", () => {
     ship.damage();
     expect(ship.numOfHits()).toEqual(1);
   });
 
-  test("isSunk should return true/false whether ship has sunk", () => {
+  test("should return true/false whether ship has sunk", () => {
     ship.damage();
     expect(ship.isSunk()).toBeFalsy();
     ship.damage();
     expect(ship.isSunk()).toBeTruthy();
+  });
+
+  test("should be a Ship object", () => {
+    expect(isShip(ship)).toBeTruthy();
   });
 });

@@ -1,3 +1,5 @@
+const SHIP_IDENTIFIER = Symbol("Ship");
+
 function Ship(len) {
   if (typeof len !== "number" || isNaN(len)) {
     throw new Error("Length must be a valid number");
@@ -14,7 +16,12 @@ function Ship(len) {
     numOfHits,
     damage,
     isSunk,
+    [SHIP_IDENTIFIER]: true,
   };
 }
 
-export { Ship };
+function isShip(object) {
+  return object && object[SHIP_IDENTIFIER] === true;
+}
+
+export { Ship, isShip };
