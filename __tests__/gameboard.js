@@ -2,12 +2,14 @@ import { GameBoard } from "../src/battleship/gameboard";
 import { Ship } from "../src/battleship/ship";
 
 describe("Gameboard Object", () => {
-  const ship1 = Ship(1);
-  const ship2 = Ship(1);
+  let ship1;
+  let ship2;
 
   let gameboard;
   beforeEach(() => {
     gameboard = GameBoard();
+    ship1 = Ship(1);
+    ship2 = Ship(1);
   });
 
   test("should throw an error at invalid coordinates", () => {
@@ -96,8 +98,49 @@ describe("Gameboard Object", () => {
     });
   });
 
-  test("should be able to attack a ship", () => {
+  describe("Attacking Ships", () => {
+    test("should be able to attack a ship", () => {
+      gameboard.place(0, 0, ship1);
+      expect(gameboard.receiveAttack(0, 0)).toBeTruthy();
+      expect(gameboard.getAttackHistory(0, 0)).toBeTruthy();
+      expect(gameboard.shipAt(0, 0).numOfHits()).toBe(1);
+    });
+
+    test("should not be able to attack a ship at the same coordinates", () => {
+      const ship3 = Ship(3);
+      gameboard.place(0, 0, ship3);
+      gameboard.receiveAttack(0, 0);
+      expect(gameboard.receiveAttack(0, 0)).toBeFalsy();
+      expect(gameboard.getAttackHistory(0, 0)).toBeTruthy();
+      expect(gameboard.shipAt(0, 0).numOfHits()).toBe(1);
+    });
+
+    test("should be able to attack a long ship and all update all occupied cells", () => {
+      const ship3 = Ship(3);
+      gameboard.place(0, 0, ship3);
+      gameboard.receiveAttack(0, 0);
+      expect(gameboard.shipAt(0, 0).numOfHits()).toBe(1);
+      expect(gameboard.shipAt(1, 0).numOfHits()).toBe(1);
+      expect(gameboard.shipAt(2, 0).numOfHits()).toBe(1);
+      gameboard.receiveAttack(1, 0);
+      expect(gameboard.shipAt(0, 0).numOfHits()).toBe(2);
+      expect(gameboard.shipAt(1, 0).numOfHits()).toBe(2);
+      expect(gameboard.shipAt(2, 0).numOfHits()).toBe(2);
+    });
+  });
+
+  test("should be able to check if all existing ships have sunk", () => {
     gameboard.place(0, 0, ship1);
-    expect(gameboard.receiveAttack(0, 0)).toBeTruthy();
+    gameboard.place(1, 0, ship2);
+    gameboard.receiveAttack(0, 0);
+    gameboard.receiveAttack(1, 0);
+    expect(gameboard.hasAllShipsSunk()).toBeTruthy();
+  });
+
+  test("should be able to check if all existing ships have not sunk", () => {
+    gameboard.place(0, 0, ship1);
+    gameboard.place(1, 0, ship2);
+    gameboard.receiveAttack(0, 0);
+    expect(gameboard.hasAllShipsSunk()).toBeFalsy();
   });
 });
