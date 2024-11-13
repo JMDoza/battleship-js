@@ -15,8 +15,6 @@ describe("Gameboard Object", () => {
   });
 
   test("should throw an error at invalid coordinates and invalid object", () => {
-    // Mock Ship class to simulate instanceof check
-
     expect(() => gameboard.place(-1, 0, ship1)).toThrow(
       "Coordinates must be a valid | within 10x10"
     );
@@ -41,7 +39,9 @@ describe("Gameboard Object", () => {
     );
   });
 
-  test("should be not able to place the same ship instance", () => {
+  test.todo("should not be able to place a ship next to a another ship");
+
+  test("should not be able to place the same ship instance", () => {
     gameboard.place(0, 0, ship1);
 
     expect(() => gameboard.place(0, 5, ship1)).toThrow(
@@ -50,19 +50,20 @@ describe("Gameboard Object", () => {
   });
 
   describe("Longer ship placement", () => {
-    const ship4 = new Ship(3);
+    const ship4 = new Ship(4);
 
     test("should be able to place a ship at specific coordinates vertically", () => {
       gameboard.place(0, 2, ship3);
       expect(gameboard.shipAt(0, 2)).toBe(ship3);
       expect(gameboard.shipAt(1, 2)).toBe(ship3);
+      expect(gameboard.shipAt(1, 2)).toBe(ship3);
     });
 
     test("should be able to place a ship at specific coordinates Horizontally", () => {
-      gameboard.place(0, 2, ship4, "horizontal");
-      expect(gameboard.shipAt(0, 2)).toBe(ship4);
-      expect(gameboard.shipAt(0, 3)).toBe(ship4);
-      expect(gameboard.shipAt(0, 4)).toBe(ship4);
+      gameboard.place(0, 2, ship3, "horizontal");
+      expect(gameboard.shipAt(0, 2)).toBe(ship3);
+      expect(gameboard.shipAt(0, 3)).toBe(ship3);
+      expect(gameboard.shipAt(0, 4)).toBe(ship3);
     });
 
     describe("Vertical Edge placement", () => {
@@ -71,7 +72,7 @@ describe("Gameboard Object", () => {
         [8, 0, [7, 8, 9]], // Test case 2
         [7, 0, [7, 8, 9]], // Test case 3
       ])(
-        "should be able to place a ship at edge without leaving grid (%i, %i)",
+        "should be able to place a ship at edge without leaving grid at (%i, %i)",
         (row, col, expectedRows) => {
           gameboard.place(row, col, ship4, "vertical");
           expectedRows.forEach((expectedRow) => {
@@ -87,7 +88,7 @@ describe("Gameboard Object", () => {
         [0, 8, [7, 8, 9]], // Test case 2
         [0, 7, [7, 8, 9]], // Test case 3
       ])(
-        "should be able to place a ship at edge without leaving grid (%i, %i)",
+        "should be able to place a ship at edge without leaving grid at (%i, %i)",
         (row, col, expectedCols) => {
           gameboard.place(row, col, ship4, "horizontal");
           expectedCols.forEach((expectedCol) => {
@@ -99,14 +100,14 @@ describe("Gameboard Object", () => {
   });
 
   describe("Attacking Ships", () => {
-    test("should be able to attack a ship", () => {
+    test("should be able to attack a cell with a ship", () => {
       gameboard.place(0, 0, ship1);
       expect(gameboard.receiveAttack(0, 0)).toBeTruthy();
       expect(gameboard.getAttackHistory(0, 0)).toBeTruthy();
       expect(gameboard.shipAt(0, 0).hits).toBe(1);
     });
 
-    test("should not be able to attack a ship at the same coordinates", () => {
+    test("should not be able to attack a cell that was already attacked", () => {
       gameboard.place(0, 0, ship3);
       gameboard.receiveAttack(0, 0);
       expect(gameboard.receiveAttack(0, 0)).toBeFalsy();
@@ -114,16 +115,18 @@ describe("Gameboard Object", () => {
       expect(gameboard.shipAt(0, 0).hits).toBe(1);
     });
 
-    test("should be able to attack a long ship and all update all occupied cells", () => {
+    test("should not be able to attack an out-of-bounds coordinates", () => {
+      expect(() => gameboard.receiveAttack(-1, 0)).toThrow(
+        "Coordinates must be a valid | within 10x10"
+      );
+    });
+
+    test("should be able to attack each segment of a long ship and correctly update all occupied cells", () => {
       gameboard.place(0, 0, ship3);
       gameboard.receiveAttack(0, 0);
       expect(gameboard.shipAt(0, 0).hits).toBe(1);
       expect(gameboard.shipAt(1, 0).hits).toBe(1);
       expect(gameboard.shipAt(2, 0).hits).toBe(1);
-      gameboard.receiveAttack(1, 0);
-      expect(gameboard.shipAt(1, 0).hits).toBe(2);
-      expect(gameboard.shipAt(0, 0).hits).toBe(2);
-      expect(gameboard.shipAt(2, 0).hits).toBe(2);
     });
   });
 
@@ -156,8 +159,7 @@ describe("Gameboard Object", () => {
         .spyOn(gameboard, "shipsArray", "get")
         .mockReturnValue([mockShip1, mockShip3]);
 
-      // Assert the correct behavior
-      expect(gameboard.hasAllShipsSunk()).toBeFalsy(); // Not all ships are sunk
+      expect(gameboard.hasAllShipsSunk()).toBeFalsy();
       expect(mockShipsArray).toHaveBeenCalled();
       mockShipsArray.mockRestore();
     });

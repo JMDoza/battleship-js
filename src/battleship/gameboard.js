@@ -143,4 +143,8 @@ function getShifts(orientation) {
   return orientation === "vertical" ? [1, 0] : [0, 1];
 }
 
-export { GameBoard };
+function isGameBoard(object) {
+  return object instanceof GameBoard;
+}
+
+export { GameBoard, isGameBoard };
