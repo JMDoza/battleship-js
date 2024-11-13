@@ -1,27 +1,32 @@
-const SHIP_IDENTIFIER = Symbol("Ship");
+class Ship {
+  constructor(length) {
+    if (typeof length !== "number" || isNaN(length) || length <= 0) {
+      throw new Error("Length must be a valid number");
+    }
 
-function Ship(len) {
-  if (typeof len !== "number" || isNaN(len) || len <= 0) {
-    throw new Error("Length must be a valid number");
+    this._length = length;
+    this._hits = 0;
   }
 
-  let hits = 0;
+  get length() {
+    return this._length;
+  }
 
-  const length = () => len;
-  const numOfHits = () => hits;
-  const damage = () => hits++;
-  const isSunk = () => hits >= len;
-  return {
-    length,
-    numOfHits,
-    damage,
-    isSunk,
-    [SHIP_IDENTIFIER]: true,
-  };
+  get hits() {
+    return this._hits;
+  }
+
+  damage() {
+    this._hits++;
+  }
+
+  isSunk() {
+    return this._hits >= this._length;
+  }
 }
 
 function isShip(object) {
-  return object && object[SHIP_IDENTIFIER] === true;
+  return object instanceof Ship;
 }
 
 export { Ship, isShip };

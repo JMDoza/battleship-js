@@ -4,20 +4,27 @@ import { Ship } from "../src/battleship/ship";
 describe("Gameboard Object", () => {
   let ship1;
   let ship2;
+  let ship3;
 
   let gameboard;
   beforeEach(() => {
-    gameboard = GameBoard();
-    ship1 = Ship(1);
-    ship2 = Ship(1);
+    gameboard = new GameBoard();
+    ship1 = new Ship(1);
+    ship2 = new Ship(1);
+    ship3 = new Ship(3);
   });
 
-  test("should throw an error at invalid coordinates", () => {
+  test("should throw an error at invalid coordinates and invalid object", () => {
+    // Mock Ship class to simulate instanceof check
+
     expect(() => gameboard.place(-1, 0, ship1)).toThrow(
       "Coordinates must be a valid | within 10x10"
     );
     expect(() => gameboard.place(0, 10, ship1)).toThrow(
       "Coordinates must be a valid | within 10x10"
+    );
+    expect(() => gameboard.place(0, 0, {})).toThrow(
+      "Must be a valid Ship Object"
     );
   });
 
@@ -35,8 +42,7 @@ describe("Gameboard Object", () => {
   });
 
   describe("Longer ship placement", () => {
-    const ship3 = Ship(2);
-    const ship4 = Ship(3);
+    const ship4 = new Ship(3);
 
     test("should be able to place a ship at specific coordinates vertically", () => {
       gameboard.place(0, 2, ship3);
@@ -103,44 +109,65 @@ describe("Gameboard Object", () => {
       gameboard.place(0, 0, ship1);
       expect(gameboard.receiveAttack(0, 0)).toBeTruthy();
       expect(gameboard.getAttackHistory(0, 0)).toBeTruthy();
-      expect(gameboard.shipAt(0, 0).numOfHits()).toBe(1);
+      expect(gameboard.shipAt(0, 0).hits).toBe(1);
     });
 
     test("should not be able to attack a ship at the same coordinates", () => {
-      const ship3 = Ship(3);
+      // const ship3 = new Ship(3);
       gameboard.place(0, 0, ship3);
       gameboard.receiveAttack(0, 0);
       expect(gameboard.receiveAttack(0, 0)).toBeFalsy();
       expect(gameboard.getAttackHistory(0, 0)).toBeTruthy();
-      expect(gameboard.shipAt(0, 0).numOfHits()).toBe(1);
+      expect(gameboard.shipAt(0, 0).hits).toBe(1);
     });
 
     test("should be able to attack a long ship and all update all occupied cells", () => {
-      const ship3 = Ship(3);
       gameboard.place(0, 0, ship3);
       gameboard.receiveAttack(0, 0);
-      expect(gameboard.shipAt(0, 0).numOfHits()).toBe(1);
-      expect(gameboard.shipAt(1, 0).numOfHits()).toBe(1);
-      expect(gameboard.shipAt(2, 0).numOfHits()).toBe(1);
+      expect(gameboard.shipAt(0, 0).hits).toBe(1);
+      expect(gameboard.shipAt(1, 0).hits).toBe(1);
+      expect(gameboard.shipAt(2, 0).hits).toBe(1);
       gameboard.receiveAttack(1, 0);
-      expect(gameboard.shipAt(0, 0).numOfHits()).toBe(2);
-      expect(gameboard.shipAt(1, 0).numOfHits()).toBe(2);
-      expect(gameboard.shipAt(2, 0).numOfHits()).toBe(2);
+      expect(gameboard.shipAt(1, 0).hits).toBe(2);
+      expect(gameboard.shipAt(0, 0).hits).toBe(2);
+      expect(gameboard.shipAt(2, 0).hits).toBe(2);
     });
   });
 
-  test("should be able to check if all existing ships have sunk", () => {
-    gameboard.place(0, 0, ship1);
-    gameboard.place(1, 0, ship2);
-    gameboard.receiveAttack(0, 0);
-    gameboard.receiveAttack(1, 0);
-    expect(gameboard.hasAllShipsSunk()).toBeTruthy();
-  });
+  describe("Checking for Ships sunk", () => {
+    let mockShip1;
+    let mockShip2;
+    let mockShipsArray;
+    beforeEach(() => {});
 
-  test("should be able to check if all existing ships have not sunk", () => {
-    gameboard.place(0, 0, ship1);
-    gameboard.place(1, 0, ship2);
-    gameboard.receiveAttack(0, 0);
-    expect(gameboard.hasAllShipsSunk()).toBeFalsy();
+    afterEach(() => {});
+
+    test("should be able to check if all existing ships have sunk", () => {
+      // Create mock ships
+      mockShip1 = { isSunk: jest.fn(() => true) };
+      mockShip2 = { isSunk: jest.fn(() => true) };
+      mockShipsArray = jest
+        .spyOn(gameboard, "shipsArray", "get")
+        .mockReturnValue([mockShip1, mockShip2]);
+
+      expect(gameboard.hasAllShipsSunk()).toBeTruthy();
+      mockShipsArray.mockRestore();
+    });
+
+    test("should be able to check if all existing ships have not sunk", () => {
+      // Create mock ships
+      mockShip1 = { isSunk: jest.fn(() => true) };
+      mockShip2 = { isSunk: jest.fn(() => false) };
+
+      // Mock shipsArray method on the gameboard instance
+      mockShipsArray = jest
+        .spyOn(gameboard, "shipsArray", "get")
+        .mockReturnValue([mockShip1, mockShip2]);
+
+      // Assert the correct behavior
+      expect(gameboard.hasAllShipsSunk()).toBeFalsy(); // Not all ships are sunk
+      expect(mockShipsArray).toHaveBeenCalled();
+      mockShipsArray.mockRestore();
+    });
   });
 });
