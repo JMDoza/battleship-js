@@ -57,6 +57,7 @@ class GameBoard {
   place(row, col, shipObject, orientation = "vertical") {
     validCoordinates(row, col);
     validShip(shipObject);
+    doesShipExist(shipObject, this.shipsArray);
     if (this.shipAt(row, col)) {
       throw new Error("Coordinates already occupied");
     }
@@ -109,8 +110,7 @@ class GameBoard {
   }
 
   hasAllShipsSunk() {
-    const array = this.shipsArray;
-    return !array.some((ship) => !ship.isSunk());
+    return !this.shipsArray.some((ship) => !ship.isSunk());
   }
 }
 
@@ -124,6 +124,12 @@ function validShip(object) {
   if (!isShip(object)) {
     throw new Error("Must be a valid Ship Object");
   }
+}
+
+function doesShipExist(shipObject, shipsArray) {
+  return shipsArray.some((ship) => {
+    if (ship === shipObject) throw new Error("Ship already exists on board");
+  });
 }
 
 function adjustStartingPosition(position, boardLimit, objectLength) {
