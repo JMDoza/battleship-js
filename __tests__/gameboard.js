@@ -35,11 +35,17 @@ describe("Gameboard Object", () => {
     gameboard.place(0, 0, ship1);
 
     expect(() => gameboard.place(0, 0, ship2)).toThrow(
-      "Coordinates already occupied"
+      "Ship within vicinity of another ship"
     );
   });
 
-  test.todo("should not be able to place a ship next to a another ship");
+  test("should not be able to place a ship next to a another ship", () => {
+    gameboard.place(2, 1, ship1);
+    expect(gameboard.shipAt(2, 1)).toBe(ship1);
+    expect(() => {
+      gameboard.place(0, 2, ship3);
+    }).toThrow("Ship within vicinity of another ship");
+  });
 
   test("should not be able to place the same ship instance", () => {
     gameboard.place(0, 0, ship1);
@@ -66,6 +72,22 @@ describe("Gameboard Object", () => {
       expect(gameboard.shipAt(0, 4)).toBe(ship3);
     });
 
+    describe("Vertical Edge placement", () => {
+      test.each([
+        [9, 0, [7, 8, 9]], // Test case 1
+        [8, 0, [7, 8, 9]], // Test case 2
+        [7, 0, [7, 8, 9]], // Test case 3
+      ])(
+        "should be able to place a ship at edge without leaving grid at (%i, %i)",
+        (row, col, expectedRows) => {
+          gameboard.place(row, col, ship4, "vertical");
+          expectedRows.forEach((expectedRow) => {
+            expect(gameboard.shipAt(expectedRow, col)).toBe(ship4);
+          });
+        }
+      );
+    });
+    
     describe("Vertical Edge placement", () => {
       test.each([
         [9, 0, [7, 8, 9]], // Test case 1

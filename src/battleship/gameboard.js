@@ -4,7 +4,7 @@ class GameBoard {
     this._rows = 10;
     this._cols = 10;
     this._board = Array.from({ length: this._rows }, () =>
-      Array(this._cols).fill(0)
+      Array(this._cols).fill(null)
     );
     this._shipsArray = [];
     this._attackHistory = {};
@@ -55,21 +55,18 @@ class GameBoard {
   }
 
   place(row, col, shipObject, orientation = "vertical") {
-    validCoordinates(row, col);
-    validShip(shipObject);
-    doesShipExist(shipObject, this.shipsArray);
-    if (this.shipAt(row, col)) {
-      throw new Error("Coordinates already occupied");
-    }
+    this._validate(validCoordinates, row, col);
+    this._validate(validShip, shipObject);
+    this._validate(doesShipExist, shipObject, this.shipsArray);
 
     this.addToShipsArray(shipObject);
 
     // ship always placed starting from the top piece
     const shipLength = shipObject.length;
-    if (shipLength === 1) {
-      this.setCell(row, col, shipObject);
-      return;
-    }
+
+    // Depending on orientaion returns array that will allow row/col to be shifted
+    // return values are either [1,0] or [0,1]
+    const [rowShift, colShift] = getShifts(orientation);
 
     // If the length of the ship passes the grid edges then the function will
     // adjust starting position to fit the ship within grid edges dependent on orientation
@@ -78,9 +75,41 @@ class GameBoard {
         ? [adjustStartingPosition(row, this.rows, shipLength), col]
         : [row, adjustStartingPosition(col, this.cols, shipLength)];
 
-    // Depending on orientaion returns array that will allow row/col to be shifted
-    // return values are either [1,0] or [0,1]
-    const [rowShift, colShift] = getShifts(orientation);
+    const directions = [
+      [-1, 0], // Up
+      [1, 0], // Down
+      [0, -1], // Left
+      [0, 1], // Right
+      [-1, -1], // Up-Left
+      [-1, 1], // Up-Right
+      [1, -1], // Down-Left
+      [1, 1], // Down-Right
+    ];
+
+    for (let i = 0; i < shipLength; i++) {
+      const currentRow = startingRow + i * rowShift;
+      const currentCol = startingCol + i * colShift;
+
+      // If current row/col has a ship throw error
+      this._validate(validShipPlacement, this, currentRow, currentCol);
+
+      for (let j = 0; j < directions.length; j++) {
+        const [dRow, dCol] = directions[j];
+        const neighborRow = currentRow + dRow;
+        const neighborCol = currentCol + dCol;
+
+        try {
+          this._validate(validCoordinates, neighborRow, neighborCol);
+        } catch (error) {
+          // console.error(error);
+          continue;
+        }
+
+        // If neighboring row/col has a ship throw error
+        this._validate(validShipPlacement, this, neighborRow, neighborCol);
+      }
+    }
+
     for (let i = 0; i < shipLength; i++) {
       this.setCell(
         startingRow + i * rowShift,
@@ -91,7 +120,7 @@ class GameBoard {
   }
 
   receiveAttack(row, col) {
-    validCoordinates(row, col);
+    this._validate(validCoordinates, row, col);
     const attackStatus = this.getAttackHistory(row, col);
     if (attackStatus !== undefined) {
       return false;
@@ -112,11 +141,21 @@ class GameBoard {
   hasAllShipsSunk() {
     return !this.shipsArray.some((ship) => !ship.isSunk());
   }
+
+  _validate(callback, ...args) {
+    return callback(...args);
+  }
 }
 
 function validCoordinates(row, col) {
   if (!(row < 10 && row >= 0) || !(col < 10 && col >= 0)) {
     throw new Error("Coordinates must be a valid | within 10x10");
+  }
+}
+
+function validShipPlacement(boardInstance, row, col) {
+  if (boardInstance.shipAt(row, col)) {
+    throw new Error("Ship within vicinity of another ship");
   }
 }
 
