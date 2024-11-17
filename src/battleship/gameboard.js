@@ -1,6 +1,8 @@
 import { isShip } from "./ship";
+import { globalEventBus } from "./event-emitter";
 class GameBoard {
-  constructor() {
+  constructor(id) {
+    this.id = id;
     this._rows = 10;
     this._cols = 10;
     this._board = Array.from({ length: this._rows }, () =>
@@ -8,6 +10,10 @@ class GameBoard {
     );
     this._shipsArray = [];
     this._attackHistory = {};
+    this.eventBus = globalEventBus;
+
+    this.eventBus.on(`placeShip:${this.id}`, this.place.bind(this));
+    this.eventBus.on(`attack:${this.id}`, this.receiveAttack.bind(this));
   }
 
   get rows() {
@@ -58,8 +64,6 @@ class GameBoard {
     this._validate(validCoordinates, row, col);
     this._validate(validShip, shipObject);
     this._validate(doesShipExist, shipObject, this.shipsArray);
-
-    this.addToShipsArray(shipObject);
 
     // ship always placed starting from the top piece
     const shipLength = shipObject.length;
@@ -116,6 +120,7 @@ class GameBoard {
         startingCol + i * colShift,
         shipObject
       );
+      this.addToShipsArray(shipObject);
     }
   }
 
@@ -123,7 +128,8 @@ class GameBoard {
     this._validate(validCoordinates, row, col);
     const attackStatus = this.getAttackHistory(row, col);
     if (attackStatus !== undefined) {
-      return false;
+      throw new Error("Cell already Attacked");
+      
     }
 
     // get target cell and apply damage if ship exists
@@ -155,6 +161,11 @@ function validCoordinates(row, col) {
 
 function validShipPlacement(boardInstance, row, col) {
   if (boardInstance.shipAt(row, col)) {
+    // console.log("BOARD ID: " + boardInstance.id);
+    // console.log("BOARD ROW AND COL: " + row + " " + col);
+
+    // console.log(boardInstance.board);
+
     throw new Error("Ship within vicinity of another ship");
   }
 }

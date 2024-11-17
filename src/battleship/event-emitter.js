@@ -23,6 +23,10 @@ class EventEmitter {
 
     this.events[event].forEach((listener) => listener(...args));
   }
+  
+  reset() {
+    this.events = {}; // Clears all events and listeners
+  }
 }
 
 const globalEventBus = new EventEmitter();

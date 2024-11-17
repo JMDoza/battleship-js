@@ -2,10 +2,25 @@ import { isGameBoard } from "./gameboard";
 import { globalEventBus } from "./event-emitter";
 
 class Player {
-  constructor(name, playerType) {
+  constructor(name, playerType, id) {
+    this.id = id;
     this._name = this._validate(name, validName);
     this._playerType = this._validate(playerType, validPlayerType);
     this._gameboard = null;
+
+    this.eventBus = globalEventBus;
+
+    this.eventBus.on(`setName:${this.id}`, (newName) => {
+      this.name = newName;
+    });
+
+    this.eventBus.on(`setType:${this.id}`, (newType) => {
+      this.playerType = newType;
+    });
+
+    this.eventBus.on(`setBoard:${this.id}`, (board) => {
+      this.gameboard = board;
+    });
   }
 
   get name() {
@@ -36,18 +51,16 @@ class Player {
     });
   }
 
+  get playerID() {
+    return this.id;
+  }
+
   get gameboard() {
     return this._gameboard;
   }
 
   set gameboard(newGameBoard) {
-    const oldGameBoard = this.gameboard;
     this._gameboard = this._validate(newGameBoard, validGameBoard);
-    globalEventBus.emit("playerGameBoardChanged", {
-      oldGameBoard,
-      newGameBoard,
-      player: this,
-    });
   }
 
   _validate(object, callback) {

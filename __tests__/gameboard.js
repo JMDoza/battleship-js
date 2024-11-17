@@ -87,7 +87,7 @@ describe("Gameboard Object", () => {
         }
       );
     });
-    
+
     describe("Vertical Edge placement", () => {
       test.each([
         [9, 0, [7, 8, 9]], // Test case 1
@@ -132,7 +132,9 @@ describe("Gameboard Object", () => {
     test("should not be able to attack a cell that was already attacked", () => {
       gameboard.place(0, 0, ship3);
       gameboard.receiveAttack(0, 0);
-      expect(gameboard.receiveAttack(0, 0)).toBeFalsy();
+      expect(() => {
+        gameboard.receiveAttack(0, 0);
+      }).toThrow();
       expect(gameboard.getAttackHistory(0, 0)).toBeTruthy();
       expect(gameboard.shipAt(0, 0).hits).toBe(1);
     });
