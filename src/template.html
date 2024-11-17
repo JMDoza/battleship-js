@@ -9,7 +9,132 @@
     <header><h1>Battleships</h1></header>
     <div class="content">
       <div class="player-container" data-playerid="1">
-        <div class="player-gameboard"></div>
+        <div class="player-gameboard">
+          <!-- Column labels -->
+          <div class="corner"></div>
+          <!-- Top-left blank corner -->
+          <div class="col-label">1</div>
+          <div class="col-label">2</div>
+          <div class="col-label">3</div>
+          <div class="col-label">4</div>
+          <div class="col-label">5</div>
+          <div class="col-label">6</div>
+          <div class="col-label">7</div>
+          <div class="col-label">8</div>
+          <div class="col-label">9</div>
+          <div class="col-label">10</div>
+
+          <div class="row-label">A</div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="row-label">B</div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="row-label">C</div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="row-label">D</div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="row-label">E</div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="row-label">F</div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="row-label">G</div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="row-label">H</div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="row-label">I</div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="row-label">J</div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+        </div>
       </div>
       <div class="player-container" data-playerid="2">
         <div class="player-gameboard"></div>
@@ -17,15 +142,15 @@
     </div>
   </body>
   <script defer>
-    const playerContainer = document.querySelectorAll(".player-gameboard");
-    const fragment = document.createDocumentFragment();
-    for (let i = 0; i < 100; i++) {
-      const cell = document.createElement("div");
-      cell.className = "cell";
-      fragment.appendChild(cell);
-    }
+    // const playerContainer = document.querySelectorAll(".player-gameboard");
+    // const fragment = document.createDocumentFragment();
+    // for (let i = 0; i < 100; i++) {
+    //   const cell = document.createElement("div");
+    //   cell.className = "cell";
+    //   fragment.appendChild(cell);
+    // }
 
-    playerContainer[1].appendChild(fragment.cloneNode(true));
-    playerContainer[0].appendChild(fragment);
+    // playerContainer[1].appendChild(fragment.cloneNode(true));
+    // playerContainer[0].appendChild(fragment);
   </script>
 </html>

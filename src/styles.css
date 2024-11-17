@@ -7,13 +7,14 @@ body {
 }
 
 header > h1 {
+  font-size: 36px;
   margin-left: 24px;
 }
 
 .content {
   display: flex;
+  justify-content: center;
   gap: 50px;
-
 }
 
 .player-container {
@@ -22,13 +23,38 @@ header > h1 {
 .player-gameboard {
   display: grid;
   width: 500px;
-  grid-template-columns: repeat(10, 1fr);
-  grid-template-columns: repeat(10, 1fr);
+  grid-template-columns: auto repeat(10, 1fr);
+  grid-template-columns: auto repeat(10, 1fr);
+  
 }
 
 .cell {
   box-sizing: border-box;
   background-color: aqua;
   height: 50px;
+  width: 50px;
   border: 1px solid black;
+}
+
+.row-label,
+.col-label,
+.corner {
+  font-weight: bold;
+  place-self: center;
+}
+
+.row-label {
+  grid-column: 1;
+  margin-right: 8px;
+}
+
+.col-label {
+  grid-row: 1;
+  margin-bottom: 8px;
+
+}
+
+.corner {
+  grid-column: 1;
+  grid-row: 1;
 }
