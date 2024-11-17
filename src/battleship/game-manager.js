@@ -104,6 +104,7 @@ class GameManager {
     const currentPlayer = this.currentPlayer === this.players[0] ? 1 : 0;
     this.currentPlayer = this.players[currentPlayer];
     this.turn++;
+    eventBus.emit(`changedTurn`, currentPlayer);
   }
 
   playTurn(row, col) {

@@ -6,6 +6,26 @@
     <title>Battleships</title>
   </head>
   <body>
-    
+    <header><h1>Battleships</h1></header>
+    <div class="content">
+      <div class="player-container" data-playerid="1">
+        <div class="player-gameboard"></div>
+      </div>
+      <div class="player-container" data-playerid="2">
+        <div class="player-gameboard"></div>
+      </div>
+    </div>
   </body>
+  <script defer>
+    const playerContainer = document.querySelectorAll(".player-gameboard");
+    const fragment = document.createDocumentFragment();
+    for (let i = 0; i < 100; i++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      fragment.appendChild(cell);
+    }
+
+    playerContainer[1].appendChild(fragment.cloneNode(true));
+    playerContainer[0].appendChild(fragment);
+  </script>
 </html>
