@@ -36,10 +36,6 @@ header > h1 {
   border: 1px solid black;
 }
 
-/* .action {
-  border: 1px solid black;
-} */
-
 .overlay {
   grid-row: 2/ 12;
   grid-column: 2/ 12;

@@ -31,7 +31,6 @@ class NormalAIController {
         }
 
         if (playerMoveList[key] === true) {
-          playerMoveList[key] = false;
           adjecentCellsToAttack.push({ row, col });
         }
       }
@@ -54,14 +53,11 @@ class NormalAIController {
           validCoordinates(rowShift, colShift);
           const key = `${rowShift},${translateCol(colShift)}`;
 
-          console.log(key);
-
           if (playerMoveList[key] === undefined) {
             attack = { row: rowShift, col: colShift };
           }
         } catch (error) {}
       }
-      console.log(attack);
     }
 
     if (!attack) {

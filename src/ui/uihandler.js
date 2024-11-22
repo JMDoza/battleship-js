@@ -71,6 +71,63 @@ class UIHandler {
         col + 2
       } / ${col + 2 + length * colshift}`
     );
+
+    let initialX = 0;
+    let initialY = 0;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    let isDragging = false;
+
+    const handleMouseMove = (event) => {
+      if (!isDragging) return;
+      const draggableElement = event.target;
+      const newX = event.clientX - offsetX;
+      const newY = event.clientY - offsetY;
+
+      console.log({ newX, newY });
+
+      initialX = newX;
+      initialY = newY;
+
+      // Prevent the default action (optional, usually for drag-drop)
+      event.preventDefault();
+
+      // Move the element using CSS transform
+      draggableElement.style.transform = `translate(${newX}px, ${newY}px)`;
+    };
+
+    shipElement.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+
+      isDragging = true;
+
+      // console.log(rect);
+      console.log(shipElement.getBoundingClientRect());
+
+      offsetX = event.clientX - initialX; // Offset of the mouse click from the element's top-left
+      offsetY = event.clientY - initialY; // Offset of the mouse click from the element's top-left
+
+      // Add event listener to move the element
+      shipElement.addEventListener("mousemove", handleMouseMove);
+    });
+
+    shipElement.addEventListener("mouseup", (event) => {
+      isDragging = false;
+
+      offsetX = event.clientX - shipElement.getBoundingClientRect().left; // Update the offset when mouse is released
+      offsetY = event.clientY - shipElement.getBoundingClientRect().top; // Update the offset when mouse is released
+
+      shipElement.removeEventListener("mousemove", handleMouseMove);
+    });
+
+    shipElement.addEventListener("mouseleave", (event) => {
+      if (isDragging) {
+        shipElement.removeEventListener("mousemove", handleMouseMove);
+        isDragging = false; // Reset in case the mouse leaves before mouseup
+      }
+    });
+
     this.playerBoardElements[playerID].appendChild(shipElement);
   }
 
@@ -116,6 +173,18 @@ class UIHandler {
       this.eventBus.emit("changeAI", 1, difficultyElement.value);
     });
   }
+}
+
+function onMouseMove(event, playerBoardElement) {
+  const draggableElement = event.target;
+  const rect = playerBoardElement.getBoundingClientRect();
+
+  const offsetX = rect.left;
+  const offsetY = rect.top;
+
+  draggableElement.style.transform = `translate(${event.clientX - offsetX}px, ${
+    event.clientY - offsetY
+  }px)`;
 }
 
 function addCellEventListener(playerID, cell) {
