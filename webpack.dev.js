@@ -9,4 +9,5 @@ module.exports = merge(common, {
     static: "./dist",
     watchFiles: ["./src/template.html"],
   },
+  devtool: "source-map",
 });

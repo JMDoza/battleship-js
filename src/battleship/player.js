@@ -1,26 +1,13 @@
 import { isGameBoard } from "./gameboard";
-import { globalEventBus } from "./event-emitter";
+import { translateCol } from "../ui/domUtils";
 
 class Player {
-  constructor(name, playerType, id) {
-    this.id = id;
+  constructor(name, playerType, gameboard, aiController = null) {
     this._name = this._validate(name, validName);
     this._playerType = this._validate(playerType, validPlayerType);
-    this._gameboard = null;
-
-    this.eventBus = globalEventBus;
-
-    this.eventBus.on(`setName:${this.id}`, (newName) => {
-      this.name = newName;
-    });
-
-    this.eventBus.on(`setType:${this.id}`, (newType) => {
-      this.playerType = newType;
-    });
-
-    this.eventBus.on(`setBoard:${this.id}`, (board) => {
-      this.gameboard = board;
-    });
+    this._gameboard = this._validate(gameboard, validGameBoard);
+    this._aiController = aiController;
+    this._attacksMade = {};
   }
 
   get name() {
@@ -30,11 +17,6 @@ class Player {
   set name(newName) {
     const oldName = this.name;
     this._name = this._validate(newName, validName);
-    globalEventBus.emit("playerNameChanged", {
-      oldName,
-      newName,
-      player: this,
-    });
   }
 
   get playerType() {
@@ -44,15 +26,6 @@ class Player {
   set playerType(newType) {
     const oldType = this.playerType;
     this._playerType = this._validate(newType, validPlayerType);
-    globalEventBus.emit("playerTypeChanged", {
-      oldType,
-      newType,
-      player: this,
-    });
-  }
-
-  get playerID() {
-    return this.id;
   }
 
   get gameboard() {
@@ -61,6 +34,51 @@ class Player {
 
   set gameboard(newGameBoard) {
     this._gameboard = this._validate(newGameBoard, validGameBoard);
+  }
+
+  get aiController() {
+    return this._aiController;
+  }
+
+  set aiController(controller) {
+    this._aiController = controller;
+  }
+
+  get attacksMade() {
+    return this._attacksMade;
+  }
+
+  setAttacksMade(row, col, result) {
+    this._attacksMade[`${row},${translateCol(col)}`] = result;
+  }
+
+  placeShip(row, col, shipObject, orientation) {
+    return this.gameboard.place(row, col, shipObject, orientation);
+  }
+
+  receiveAttack(row, col) {
+    return this.gameboard.receiveAttack(row, col);
+  }
+
+  makeAttack(targetPlayerObject, row, col) {
+    if (this.playerType === "computer") {
+      const attack = this._aiController.takeAction(
+        this.attacksMade,
+        this.gameboard.rows,
+        this.gameboard.cols
+      );
+
+      row = attack.row;
+      col = attack.col;
+    }
+
+    const attackResult = targetPlayerObject.receiveAttack(row, col);
+    this.setAttacksMade(row, col, attackResult);
+    return { row, col, attackResult };
+  }
+
+  hasAllShipsSunk() {
+    return this.gameboard.hasAllShipsSunk();
   }
 
   _validate(object, callback) {

@@ -2,28 +2,37 @@ import { globalEventBus as eventBus } from "./event-emitter";
 import GameStates from "./gamestates";
 
 class GameManager {
-  constructor(players, boards) {
+  constructor(players) {
     this._players = players;
-    this._gameboards = boards;
+    this._ships = [];
+    this._shipStartingCoordinates = [[], []];
+    this._currentPlayer = players[0];
     this._turn = 0;
-    this._currentPlayer = null;
     this._state = GameStates.INITIALIZATION;
+
+    eventBus.on(
+      `randomizeShipsPressed`,
+      this.randomizeShipPlacements.bind(this)
+    );
+
+    eventBus.on(`startGame`, this.startGame.bind(this));
+    eventBus.on(`playTurn`, this.playTurn.bind(this));
   }
 
   get players() {
     return this._players;
   }
 
-  get gameboards() {
-    return this._gameboards;
+  get ships() {
+    return this._ships;
   }
 
-  get turn() {
-    return this._turn;
+  setShips(playerID, ships) {
+    this._ships[playerID] = ships;
   }
 
-  set turn(turnNumber) {
-    this._turn = turnNumber;
+  get shipStartingCoordinates() {
+    return this._shipStartingCoordinates;
   }
 
   get currentPlayer() {
@@ -34,91 +43,191 @@ class GameManager {
     this._currentPlayer = player;
   }
 
+  get turn() {
+    return this._turn;
+  }
+
+  set turn(turnNumber) {
+    this._turn = turnNumber;
+  }
+
   get state() {
     return this._state;
   }
 
   setState(newState) {
-    validStateTransition(newState);
+    this._validate(validStateTransition, newState);
     eventBus.emit(`stateChanged`, { oldState: this._state, newState });
     this._state = newState;
   }
 
-  selectFirstPlayer(player) {
-    this.currentPlayer = player;
+  setPlayerAIController(playerID, controller) {
+    this.players[playerID].aiController = controller;
   }
 
-  getPlayerGameBoard(player) {
-    return player.gameboard;
+  getPlayerGameBoard(playerID) {
+    return this.players[playerID].gameboard;
   }
 
-  setPlayersGameBoard() {
-    const boards = this.gameboards;
-
-    eventBus.emit("setBoard:1", boards[0]);
-    eventBus.emit("setBoard:2", boards[1]);
+  setPlayerGameBoard(playerID, newGameBoard) {
+    this.players[playerID].gameboard = newGameBoard;
   }
 
-  setPlayersType(playerId, type) {
-    eventBus.emit(`setType:${playerId}`, type);
+  setPlayersType(playerID, newType) {
+    this.players[playerID].playerType = newType;
   }
 
-  getPlayerCell(player, row, col) {
-    return this.getPlayerGameBoard(player).shipAt(row, col);
+  getPlayerCell(playerID, row, col) {
+    return this.getPlayerGameBoard(playerID).getCell(row, col);
   }
 
   // Taking advanatage of pubsub module to place ships for loose coupling
-  initializeShips(p1Ships, p1Coordinates, p2Ships, p2Coordinates) {
-    for (let i = 0; i < p1Ships.length; i++) {
-      eventBus.emit(
-        "placeShip:1",
-        p1Coordinates[i][0],
-        p1Coordinates[i][1],
-        p1Ships[i],
-        p1Coordinates[i][2]
-      );
-      eventBus.emit(
-        "placeShip:2",
-        p2Coordinates[i][0],
-        p2Coordinates[i][1],
-        p2Ships[i],
-        p2Coordinates[i][2]
-      );
+  initializeShips(playerID, ships, coordinates) {
+    this._validate(validPlayerID, this, playerID);
+    this._validate(validateNotEmpty, ships);
+
+    if (coordinates) {
+      this._validate(validateNotEmpty, coordinates);
+      for (let i = 0; i < ships.length; i++) {
+        const [row, col, orientation] = coordinates[i];
+
+        const [startingRow, startingCol] = this.players[playerID].placeShip(
+          row,
+          col,
+          ships[i],
+          orientation
+        );
+
+        this._shipStartingCoordinates[playerID][i] = [
+          startingRow,
+          startingCol,
+          orientation,
+        ];
+
+        eventBus.emit("placedShip", {
+          playerID,
+          startingRow,
+          startingCol,
+          orientation,
+          ship: ships[i],
+        });
+      }
+    } else {
+      const generatedCoordinates =
+        this.getPlayerGameBoard(playerID).generateRandomCoordinates(ships);
+
+      this._shipStartingCoordinates[playerID] = generatedCoordinates;
+
+      if (this.players[playerID].playerType === "real") {
+        for (let i = 0; i < generatedCoordinates.length; i++) {
+          const [row, col, orientation] = generatedCoordinates[i];
+          eventBus.emit("placedShip", {
+            playerID,
+            row,
+            col,
+            orientation,
+            ship: ships[i],
+          });
+        }
+      }
+
+      return generatedCoordinates;
     }
   }
 
-  startGame(firstPlayer, { p1Ships, p1Coordinates, p2Ships, p2Coordinates }) {
-    this.currentPlayer = firstPlayer;
-    this.setPlayersGameBoard();
-    this.initializeShips(p1Ships, p1Coordinates, p2Ships, p2Coordinates);
+  randomizeShipPlacements(playerID) {
+    this.initializeShips(playerID, this.ships[playerID]);
+  }
+
+  startGame(firstPlayerID, { p1Ships, p1Coordinates, p2Ships, p2Coordinates }) {
+    this.currentPlayer = this._players[firstPlayerID];
+    if (p1Ships && p1Ships.length > 0) {
+      this.initializeShips(0, p1Ships, p1Coordinates);
+    }
+
+    if (!(p2Ships && p2Ships.length > 0)) {
+      p2Ships = this.ships[1];
+    }
+
+    this.initializeShips(1, p2Ships, p2Coordinates);
     this.setState(GameStates.IN_PROGRESS);
+
+    this.switchTurn(firstPlayerID);
+  }
+
+  makePlayerAttack(currentPlayerID, targetPlayerID, row, col) {
+    const currentPlayer = this.players[currentPlayerID];
+    const targetPlayer = this.players[targetPlayerID];
+    return currentPlayer.makeAttack(targetPlayer, row, col);
+  }
+
+  switchTurn(nextPlayerID) {
+    const previousPlayerID = this.players.findIndex(
+      (player) => player === this.currentPlayer
+    );
+
+    const previousPlayer = this.currentPlayer;
+    const nextPlayer = this.players[nextPlayerID];
+    this.currentPlayer = nextPlayer;
     this.turn++;
+
+    eventBus.emit("changedTurn", {
+      previousPlayer: previousPlayerID,
+      nextPlayer: nextPlayerID,
+    });
+
+    console.log(
+      `Turn switched from ${previousPlayer.name} to ${nextPlayer.name}`
+    );
+
+    if (nextPlayer.playerType === "computer") {
+      eventBus.emit("playTurn", previousPlayerID, 0, 0);
+    }
   }
 
-  attack(player, row, col) {
-    const playerID = player.playerID;
-    eventBus.emit(`attack:${playerID}`, row, col);
-  }
-
-  switchTurn() {
-    const currentPlayer = this.currentPlayer === this.players[0] ? 1 : 0;
-    this.currentPlayer = this.players[currentPlayer];
-    this.turn++;
-    eventBus.emit(`changedTurn`, currentPlayer);
-  }
-
-  playTurn(row, col) {
+  playTurn(targetPlayerID, row, col) {
     if (this.state !== GameStates.IN_PROGRESS) {
       throw new Error("Game not in progress");
     }
 
-    const playerAttacked = this.currentPlayer === this.players[0] ? 1 : 0;
-    this.attack(this.players[playerAttacked], row, col);
-    if (this.gameboards[playerAttacked].hasAllShipsSunk()) {
+    if (this.currentPlayer === this.players[targetPlayerID]) {
+      throw new Error("Wrong gameboard!");
+    }
+
+    const currentPlayerID = this.players.findIndex(
+      (player) => player === this.currentPlayer
+    );
+
+    targetPlayerID = this.currentPlayer === this.players[0] ? 1 : 0;
+
+    const results = this.makePlayerAttack(
+      currentPlayerID,
+      targetPlayerID,
+      row,
+      col
+    );
+
+    row = results.row;
+    col = results.col;
+
+    eventBus.emit("attackMade", {
+      targetPlayerID,
+      row,
+      col,
+      attackResult: results.attackResult,
+    });
+
+    if (this.players[targetPlayerID].hasAllShipsSunk()) {
       this.setState(GameStates.GAME_OVER);
+      eventBus.emit("gameover", this.players[currentPlayerID].name);
       return;
     }
-    this.switchTurn();
+
+    this.switchTurn(targetPlayerID);
+  }
+
+  _validate(callback, ...args) {
+    return callback(...args);
   }
 }
 
@@ -131,6 +240,18 @@ function validStateTransition(newState) {
 
   if (validTransitions[newState].includes(newState)) {
     throw new Error("Invalid state change");
+  }
+}
+
+function validPlayerID(GMInstance, playerID) {
+  if (!(GMInstance.players.length - 1 >= playerID)) {
+    throw new Error("Must have valid playerID");
+  }
+}
+
+function validateNotEmpty(array) {
+  if (array.length === 0) {
+    throw new Error("Must not be empty");
   }
 }
 

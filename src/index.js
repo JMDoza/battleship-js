@@ -1,48 +1,58 @@
 import "./styles.css";
-// import { Player } from "./battleship/player";
-// import { GameBoard } from "./battleship/gameboard";
-// import { Ship } from "./battleship/ship";
-// import { GameManager } from "./battleship/game-manager";
+import { Player } from "./battleship/player";
+import { GameBoard } from "./battleship/gameboard";
+import { Ship } from "./battleship/ship";
+import { GameManager } from "./battleship/game-manager";
+import {
+  EasyAIController,
+  NormalAIController,
+} from "./battleship/AIController";
+import { UIHandler } from "./ui/uihandler";
+import { globalEventBus as eventBus } from "./battleship/event-emitter";
 
-// const players = [
-//   new Player("Player 1", "real", 1),
-//   new Player("Player 2", "computer", 2),
-// ];
+eventBus.on("changeAI", changeAI);
 
-// const boards = [new GameBoard(1), new GameBoard(2)];
+let player1Board = new GameBoard();
+let player2Board = new GameBoard();
+let aiController = new EasyAIController();
 
-// const p1Ships = [new Ship(1)];
-// const p2Ships = [new Ship(1)];
+const players = [
+  new Player("Player 1", "real", player1Board),
+  new Player("Player 2", "computer", player2Board, aiController),
+];
 
-// const p1Coordinates = [
-//   [1, 1, "vertical"],
-//   [4, 1, "horizontal"],
-//   [6, 6, "horizontal"],
-// ];
+const p1Ships = [
+  new Ship(2),
+  new Ship(3),
+  new Ship(3),
+  new Ship(4),
+  new Ship(5),
+];
 
-// const p2Coordinates = [
-//   [1, 1, "vertical"],
-//   [4, 1, "horizontal"],
-//   [6, 6, "horizontal"],
-// ];
+const p2Ships = [
+  new Ship(2),
+  new Ship(3),
+  new Ship(3),
+  new Ship(4),
+  new Ship(5),
+];
+const uihandler = new UIHandler();
+const gameManager = new GameManager(players);
+gameManager.setShips(0, p1Ships);
+gameManager.setShips(1, p2Ships);
+gameManager.initializeShips(0, p1Ships);
 
-// const gameManager = new GameManager(players, boards);
-// gameManager.startGame(players[0], {
-//   p1Ships,
-//   p1Coordinates,
-//   p2Ships,
-//   p2Coordinates,
-// });
+function changeAI(playerID, AI) {
+  switch (AI) {
+    case "Easy":
+      gameManager.setPlayerAIController(playerID, new EasyAIController());
+      break;
 
-// try {
-//   gameManager.playTurn(1, 1);
-// } catch (error) {
-//   console.log(error);
-// }
-// try {
-//   gameManager.playTurn(2, 1);
-// } catch (error) {
-//   console.log(error);
-// }
+    case "Normal":
+      gameManager.setPlayerAIController(playerID, new NormalAIController());
+      break;
 
-// console.log(gameManager);
+    default:
+      break;
+  }
+}

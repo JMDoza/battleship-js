@@ -28,7 +28,7 @@ describe("Gameboard Object", () => {
 
   test("should be able to place a ship at specific coordinates", () => {
     gameboard.place(0, 0, ship1);
-    expect(gameboard.shipAt(0, 0)).toBe(ship1);
+    expect(gameboard.getCell(0, 0)).toBe(ship1);
   });
 
   test("should be not able to place a ship at occupied coordinates", () => {
@@ -41,7 +41,7 @@ describe("Gameboard Object", () => {
 
   test("should not be able to place a ship next to a another ship", () => {
     gameboard.place(2, 1, ship1);
-    expect(gameboard.shipAt(2, 1)).toBe(ship1);
+    expect(gameboard.getCell(2, 1)).toBe(ship1);
     expect(() => {
       gameboard.place(0, 2, ship3);
     }).toThrow("Ship within vicinity of another ship");
@@ -60,16 +60,16 @@ describe("Gameboard Object", () => {
 
     test("should be able to place a ship at specific coordinates vertically", () => {
       gameboard.place(0, 2, ship3);
-      expect(gameboard.shipAt(0, 2)).toBe(ship3);
-      expect(gameboard.shipAt(1, 2)).toBe(ship3);
-      expect(gameboard.shipAt(1, 2)).toBe(ship3);
+      expect(gameboard.getCell(0, 2)).toBe(ship3);
+      expect(gameboard.getCell(1, 2)).toBe(ship3);
+      expect(gameboard.getCell(1, 2)).toBe(ship3);
     });
 
     test("should be able to place a ship at specific coordinates Horizontally", () => {
       gameboard.place(0, 2, ship3, "horizontal");
-      expect(gameboard.shipAt(0, 2)).toBe(ship3);
-      expect(gameboard.shipAt(0, 3)).toBe(ship3);
-      expect(gameboard.shipAt(0, 4)).toBe(ship3);
+      expect(gameboard.getCell(0, 2)).toBe(ship3);
+      expect(gameboard.getCell(0, 3)).toBe(ship3);
+      expect(gameboard.getCell(0, 4)).toBe(ship3);
     });
 
     describe("Vertical Edge placement", () => {
@@ -82,7 +82,7 @@ describe("Gameboard Object", () => {
         (row, col, expectedRows) => {
           gameboard.place(row, col, ship4, "vertical");
           expectedRows.forEach((expectedRow) => {
-            expect(gameboard.shipAt(expectedRow, col)).toBe(ship4);
+            expect(gameboard.getCell(expectedRow, col)).toBe(ship4);
           });
         }
       );
@@ -98,7 +98,7 @@ describe("Gameboard Object", () => {
         (row, col, expectedRows) => {
           gameboard.place(row, col, ship4, "vertical");
           expectedRows.forEach((expectedRow) => {
-            expect(gameboard.shipAt(expectedRow, col)).toBe(ship4);
+            expect(gameboard.getCell(expectedRow, col)).toBe(ship4);
           });
         }
       );
@@ -114,7 +114,7 @@ describe("Gameboard Object", () => {
         (row, col, expectedCols) => {
           gameboard.place(row, col, ship4, "horizontal");
           expectedCols.forEach((expectedCol) => {
-            expect(gameboard.shipAt(row, expectedCol)).toBe(ship4);
+            expect(gameboard.getCell(row, expectedCol)).toBe(ship4);
           });
         }
       );
@@ -125,8 +125,8 @@ describe("Gameboard Object", () => {
     test("should be able to attack a cell with a ship", () => {
       gameboard.place(0, 0, ship1);
       expect(gameboard.receiveAttack(0, 0)).toBeTruthy();
-      expect(gameboard.getAttackHistory(0, 0)).toBeTruthy();
-      expect(gameboard.shipAt(0, 0).hits).toBe(1);
+      expect(gameboard.getAttacksReceived(0, 0)).toBeTruthy();
+      expect(gameboard.getCell(0, 0).hits).toBe(1);
     });
 
     test("should not be able to attack a cell that was already attacked", () => {
@@ -135,8 +135,8 @@ describe("Gameboard Object", () => {
       expect(() => {
         gameboard.receiveAttack(0, 0);
       }).toThrow();
-      expect(gameboard.getAttackHistory(0, 0)).toBeTruthy();
-      expect(gameboard.shipAt(0, 0).hits).toBe(1);
+      expect(gameboard.getAttacksReceived(0, 0)).toBeTruthy();
+      expect(gameboard.getCell(0, 0).hits).toBe(1);
     });
 
     test("should not be able to attack an out-of-bounds coordinates", () => {
@@ -148,9 +148,9 @@ describe("Gameboard Object", () => {
     test("should be able to attack each segment of a long ship and correctly update all occupied cells", () => {
       gameboard.place(0, 0, ship3);
       gameboard.receiveAttack(0, 0);
-      expect(gameboard.shipAt(0, 0).hits).toBe(1);
-      expect(gameboard.shipAt(1, 0).hits).toBe(1);
-      expect(gameboard.shipAt(2, 0).hits).toBe(1);
+      expect(gameboard.getCell(0, 0).hits).toBe(1);
+      expect(gameboard.getCell(1, 0).hits).toBe(1);
+      expect(gameboard.getCell(2, 0).hits).toBe(1);
     });
   });
 
@@ -187,5 +187,19 @@ describe("Gameboard Object", () => {
       expect(mockShipsArray).toHaveBeenCalled();
       mockShipsArray.mockRestore();
     });
+  });
+
+  test("should be able to reset board", () => {
+    gameboard.place(0, 0, ship1);
+    gameboard.receiveAttack(0, 0);
+    expect(gameboard.getCell(0, 0)).toBe(ship1);
+    expect(gameboard.shipsArray).toHaveLength(1);
+    expect(Object.keys(gameboard.attacksReceived)).toHaveLength(1);
+
+    gameboard.reset();
+
+    expect(gameboard.getCell(0, 0)).toBeNull;
+    expect(gameboard.shipsArray).toHaveLength(0);
+    expect(Object.keys(gameboard.attacksReceived)).toHaveLength(0);
   });
 });
