@@ -47,14 +47,6 @@ describe("Gameboard Object", () => {
     }).toThrow("Ship within vicinity of another ship");
   });
 
-  test("should not be able to place the same ship instance", () => {
-    gameboard.place(0, 0, ship1);
-
-    expect(() => gameboard.place(0, 5, ship1)).toThrow(
-      "Ship already exists on board"
-    );
-  });
-
   describe("Longer ship placement", () => {
     const ship4 = new Ship(4);
 

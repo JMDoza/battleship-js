@@ -1,14 +1,21 @@
 import { createElement, appendChildren } from "./domUtils";
 import { translateCol } from "./domUtils";
-import { globalEventBus } from "../battleship/event-emitter";
+import { globalEventBus as eventBus } from "../battleship/event-emitter";
 
 class UIHandler {
   constructor() {
-    this.eventBus = globalEventBus;
+    this.eventBus = eventBus;
     this.playerBoardElements = document.querySelectorAll(".player-gameboard");
     this.turnOverlay = createElement("div", "overlay");
+    this.currentDraggable = null;
+    this.draggableStyle = null;
 
     this.eventBus.on(`placedShip`, this.renderShip.bind(this));
+    this.eventBus.on(`succeededMove`, this.reRenderShip.bind(this));
+    this.eventBus.on(
+      `failedMove`,
+      this.updateCurrentDraggableElement.bind(this)
+    );
     this.eventBus.on(`changedTurn`, this.handleSwitchTurns.bind(this));
     this.eventBus.on(`attackMade`, this.renderAttack.bind(this));
     this.eventBus.on(`gameover`, this.updateResultsUI.bind(this));
@@ -34,7 +41,7 @@ class UIHandler {
 
       for (let j = 0; j < 10; j++) {
         const cell = createElement("div", "cell");
-        addCellEventListener(playerID, cell);
+        addCellEventListener(this, playerID, cell);
         addDataSet(cell, i, j);
         addGridStyle(cell, i, j);
         fragArray.push(cell);
@@ -60,11 +67,16 @@ class UIHandler {
     });
   }
 
-  renderShip({ playerID, ship, row, col, orientation }) {
+  renderShip({ playerID, shipID, ship, row, col, orientation }) {
     const length = ship.length;
 
     const [rowshift, colshift] = orientation === "vertical" ? [1, 0] : [0, 1];
     const shipElement = createElement("div", "ship");
+    shipElement.dataset.length = length;
+    shipElement.dataset.orientation = orientation;
+    shipElement.dataset.row = row;
+    shipElement.dataset.col = col;
+    shipElement.dataset.shipId = shipID;
     shipElement.setAttribute(
       "style",
       `grid-row: ${row + 2} / ${row + 2 + length * rowshift}; grid-column: ${
@@ -72,63 +84,24 @@ class UIHandler {
       } / ${col + 2 + length * colshift}`
     );
 
-    let initialX = 0;
-    let initialY = 0;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    let isDragging = false;
-
-    const handleMouseMove = (event) => {
-      if (!isDragging) return;
-      const draggableElement = event.target;
-      const newX = event.clientX - offsetX;
-      const newY = event.clientY - offsetY;
-
-      console.log({ newX, newY });
-
-      initialX = newX;
-      initialY = newY;
-
-      // Prevent the default action (optional, usually for drag-drop)
-      event.preventDefault();
-
-      // Move the element using CSS transform
-      draggableElement.style.transform = `translate(${newX}px, ${newY}px)`;
-    };
-
-    shipElement.addEventListener("mousedown", (event) => {
-      event.preventDefault();
-
-      isDragging = true;
-
-      // console.log(rect);
-      console.log(shipElement.getBoundingClientRect());
-
-      offsetX = event.clientX - initialX; // Offset of the mouse click from the element's top-left
-      offsetY = event.clientY - initialY; // Offset of the mouse click from the element's top-left
-
-      // Add event listener to move the element
-      shipElement.addEventListener("mousemove", handleMouseMove);
-    });
-
-    shipElement.addEventListener("mouseup", (event) => {
-      isDragging = false;
-
-      offsetX = event.clientX - shipElement.getBoundingClientRect().left; // Update the offset when mouse is released
-      offsetY = event.clientY - shipElement.getBoundingClientRect().top; // Update the offset when mouse is released
-
-      shipElement.removeEventListener("mousemove", handleMouseMove);
-    });
-
-    shipElement.addEventListener("mouseleave", (event) => {
-      if (isDragging) {
-        shipElement.removeEventListener("mousemove", handleMouseMove);
-        isDragging = false; // Reset in case the mouse leaves before mouseup
-      }
-    });
+    makeDraggable(this, shipElement);
 
     this.playerBoardElements[playerID].appendChild(shipElement);
+  }
+
+  reRenderShip({ row, col }) {
+    const shipData = this.currentDraggable.dataset;
+    length = parseInt(shipData.length);
+
+    const [rowshift, colshift] =
+      shipData.orientation === "vertical" ? [1, 0] : [0, 1];
+
+    this.currentDraggable.style.gridRow = `${row + 2} / ${
+      row + 2 + length * rowshift
+    }`;
+    this.currentDraggable.style.gridColumn = `${col + 2} / ${
+      col + 2 + length * colshift
+    }`;
   }
 
   renderAttack({ targetPlayerID, row, col, attackResult }) {
@@ -153,6 +126,10 @@ class UIHandler {
     resultElement.textContent = `${playerName} Wins!`;
   }
 
+  updateCurrentDraggableElement(style) {
+    this.currentDraggable.setAttribute("style", style);
+  }
+
   initializeEventListeners() {
     const randomizeButton = document.getElementById("randomize-button");
     const startButton = document.getElementById("start-button");
@@ -175,28 +152,78 @@ class UIHandler {
   }
 }
 
-function onMouseMove(event, playerBoardElement) {
-  const draggableElement = event.target;
-  const rect = playerBoardElement.getBoundingClientRect();
+function makeDraggable(instance, draggableElement) {
+  draggableElement.addEventListener("mousedown", (event) => {
+    event.preventDefault();
 
-  const offsetX = rect.left;
-  const offsetY = rect.top;
+    instance.draggableStyle = draggableElement.getAttribute("style");
 
-  draggableElement.style.transform = `translate(${event.clientX - offsetX}px, ${
-    event.clientY - offsetY
-  }px)`;
+    draggableElement.style.pointerEvents = "none";
+    draggableElement.style.zIndex = "900";
+    instance.currentDraggable = draggableElement;
+
+    const handleMouseUp = () => {
+      mouseUp(instance, handleMouseUp);
+    };
+
+    document.addEventListener("mouseup", handleMouseUp);
+  });
 }
 
-function addCellEventListener(playerID, cell) {
+function mouseUp(instance, handleMouseUp) {
+  const element = instance.currentDraggable;
+
+  element.style.pointerEvents = "auto";
+  element.style.zIndex = "auto";
+
+  const shipData = element.dataset;
+
+  eventBus.emit("moveShip", {
+    originalStyle: instance.draggableStyle,
+    playerID: 0,
+    shipID: shipData.shipId,
+    row: shipData.row,
+    col: shipData.col,
+    orientation: shipData.orientation,
+    length: shipData.length,
+  });
+  instance.currentDraggable = null;
+  document.removeEventListener("mouseup", handleMouseUp);
+}
+
+function addCellEventListener(instance, playerID, cell) {
   cell.addEventListener("click", (event) => {
     const cellData = event.currentTarget.dataset;
     const row = parseInt(cellData.row);
     const col = parseInt(cellData.col);
     try {
-      globalEventBus.emit("playTurn", playerID, row, col);
+      eventBus.emit("playTurn", playerID, row, col);
     } catch (error) {
       console.log(error);
+      // console.log(cell);
     }
+  });
+
+  cell.addEventListener("mouseover", (event) => {
+    const cellData = event.currentTarget.dataset;
+    const row = parseInt(cellData.row);
+    const col = parseInt(cellData.col);
+    const draggableElement = instance.currentDraggable;
+
+    if (draggableElement) {
+      const length = draggableElement.dataset.length;
+      draggableElement.dataset.row = row;
+      draggableElement.dataset.col = col;
+      const [rowshift, colshift] =
+        draggableElement.dataset.orientation === "vertical" ? [1, 0] : [0, 1];
+      draggableElement.style.gridRow = `${row + 2} / ${
+        row + 2 + length * rowshift
+      }`;
+      draggableElement.style.gridColumn = `${col + 2} / ${
+        col + 2 + length * colshift
+      }`;
+    }
+    // console.log({ row, col });
   });
 }
 

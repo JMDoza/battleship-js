@@ -1,6 +1,5 @@
 import { isShip } from "./ship";
 import { translateCol } from "../ui/domUtils";
-import { globalEventBus as eventBus } from "./event-emitter";
 
 class GameBoard {
   constructor() {
@@ -41,6 +40,15 @@ class GameBoard {
     this.shipsArray.push(shipObject);
   }
 
+  removeFromShipsArray(shipObject) {
+    let array = this.shipsArray;
+    for (let i = 0; i < array.length; i++) {
+      if (array[i] === shipObject) {
+        array.splice(i, 1);
+      }
+    }
+  }
+
   get attacksReceived() {
     return this._attacksReceived;
   }
@@ -56,7 +64,6 @@ class GameBoard {
   place(row, col, shipObject, orientation = "vertical") {
     this._validate(validCoordinates, row, col);
     this._validate(validShip, shipObject);
-    this._validate(doesShipExist, shipObject, this.shipsArray);
 
     // ship always placed starting from the top piece
 
@@ -124,7 +131,22 @@ class GameBoard {
         shipObject
       );
     }
-    this.addToShipsArray(shipObject);
+    try {
+      this._validate(doesShipExist, shipObject, this.shipsArray);
+      this.addToShipsArray(shipObject);
+    } catch {}
+  }
+
+  removeShipFromBoard(shipID, shipCoordinates) {
+    const [rowShift, colShift] = getShifts(shipCoordinates[2]);
+    const length = this.shipsArray[shipID].length;
+    for (let i = 0; i < length; i++) {
+      this.setCell(
+        shipCoordinates[0] + i * rowShift,
+        shipCoordinates[1] + i * colShift,
+        null
+      );
+    }
   }
 
   generateRandomCoordinates(ships) {

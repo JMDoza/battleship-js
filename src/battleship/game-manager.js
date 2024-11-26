@@ -17,6 +17,7 @@ class GameManager {
 
     eventBus.on(`startGame`, this.startGame.bind(this));
     eventBus.on(`playTurn`, this.playTurn.bind(this));
+    eventBus.on(`moveShip`, this.moveShip.bind(this));
   }
 
   get players() {
@@ -104,12 +105,15 @@ class GameManager {
           orientation,
         ];
 
+        console.log(i);
+
         eventBus.emit("placedShip", {
           playerID,
           startingRow,
           startingCol,
           orientation,
           ship: ships[i],
+          shipID: i,
         });
       }
     } else {
@@ -127,6 +131,7 @@ class GameManager {
             col,
             orientation,
             ship: ships[i],
+            shipID: i,
           });
         }
       }
@@ -153,6 +158,7 @@ class GameManager {
     this.setState(GameStates.IN_PROGRESS);
 
     this.switchTurn(firstPlayerID);
+    console.log(this.shipStartingCoordinates);
   }
 
   makePlayerAttack(currentPlayerID, targetPlayerID, row, col) {
@@ -224,6 +230,39 @@ class GameManager {
     }
 
     this.switchTurn(targetPlayerID);
+  }
+
+  moveShip({ originalStyle, playerID, shipID, row, col, orientation }) {
+    const gameboard = this.getPlayerGameBoard(playerID);
+    const originalCoordinates = this.shipStartingCoordinates[playerID][shipID];
+
+    gameboard.removeShipFromBoard(shipID, originalCoordinates);
+
+    try {
+      const [startingRow, startingCol] = gameboard.place(
+        parseInt(row),
+        parseInt(col),
+        this.ships[playerID][shipID],
+        orientation
+      );
+
+      eventBus.emit("succeededMove", { row: startingRow, col: startingCol });
+
+      this._shipStartingCoordinates[playerID][shipID] = [
+        startingRow,
+        startingCol,
+        orientation,
+      ];
+    } catch (error) {
+      console.log(error);
+      gameboard.place(
+        originalCoordinates[0],
+        originalCoordinates[1],
+        this.ships[playerID][shipID],
+        originalCoordinates[2]
+      );
+      eventBus.emit("failedMove", originalStyle);
+    }
   }
 
   _validate(callback, ...args) {
